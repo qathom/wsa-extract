@@ -57,3 +57,10 @@ project/plugins/project/
 
 # Mongo Explorer plugin:
 .idea/mongoSettings.xml
+
+
+# input
+input/**
+
+# output
+output/**
