@@ -24,17 +24,13 @@ class SparkAnalysis() {
 
   }
 
-  def runQueries(filename: String): Unit = {
-    val filepath = "./output/" + filename
-    if (!(new File(filepath).exists())) {
-      throw new Exception("File " + filepath + " does not exist.")
-    }
+  def runQueries(): Unit = {
     val spark = this.createSession()
 
     import spark.implicits._
 
 
-    val tweets = spark.read.json(filepath).as[Tweet]
+    val tweets = spark.read.json("./output/*.json").as[Tweet]
       .toDF() // params => rename cols
       .cache()
 

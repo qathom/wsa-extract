@@ -1,9 +1,12 @@
 import java.io.{File, FileWriter}
+import java.text.SimpleDateFormat
+import java.util.{Date, Locale}
 
 import org.codehaus.jettison.json.JSONObject
 import org.json4s.JsonAST.{JInt, JString}
 import org.json4s.{DefaultFormats, JValue}
 import org.json4s.jackson.Json
+import scala.util.control.Breaks._
 
 import scala.io.Source
 
@@ -83,7 +86,7 @@ class TweetNormalizer {
     return candidateFound
   }
 
-  def transform(inputFile: String, outputFile: String): Unit = {
+  def transform(inputFile: String): Unit = {
     val filename = "./input/" + inputFile
 
     // Check if input file exists
@@ -93,56 +96,92 @@ class TweetNormalizer {
 
     val linesLength = Source.fromFile(filename).getLines().length
     var lineNumber = 0
+    var lineError = 0
 
-    println("Read " + linesLength + " lines.")
+    println("######")
+    println("Extracting " + linesLength + " tweets from " + filename)
+    println("######")
+
+    var currentLine: String = ""
 
     for (line <- Source.fromFile(filename).getLines()) {
-      val json = new JSONObject(line);
+      breakable {
+        currentLine = line
+        lineNumber += 1
 
-      val tweet = collection.mutable.Map[String, Any]()
+        // remove comma as first char
+        if (currentLine.charAt(0).toString == ",") {
+          currentLine = currentLine.substring(1)
+        }
+        // remove comma as last char
+        if (currentLine.charAt(currentLine.length - 1).toString == ",") {
+          currentLine = currentLine.substring(0, currentLine.length - 1)
+        }
 
-      // flat
-      tweet("created_at") = json.getString("created_at")
-      tweet("id_str") = json.getString("id_str")
-      tweet("text") = json.getString("text")
-      tweet("retweet_count") = json.getInt("retweet_count")
-      tweet("favorite_count") = json.getInt("favorite_count")
-      tweet("lang") = json.getString("lang")
-      tweet("retweeted") = json.getBoolean("retweeted")
-      tweet("favorited") = json.getBoolean("favorited")
+        try {
+          val json = new JSONObject(currentLine);
+          val tweet = collection.mutable.Map[String, Any]()
 
-      // user
-      tweet("user_id") = JsonUtil.getNestedObjectValue(json, "user", "id")
-      tweet("user_location") = JsonUtil.getNestedObjectValue(json, "user", "location")
-      tweet("user_statuses_count") = JsonUtil.getNestedObjectValue(json, "user", "statuses_count")
-      tweet("user_created_at") = JsonUtil.getNestedObjectValue(json, "user", "created_at")
-      tweet("user_lang") = JsonUtil.getNestedObjectValue(json, "user", "lang")
+          // flat
+          tweet("created_at") = json.getString("created_at")
+          tweet("id_str") = json.getString("id_str")
+          tweet("text") = json.getString("text")
+          tweet("retweet_count") = json.getInt("retweet_count")
+          tweet("favorite_count") = json.getInt("favorite_count")
+          tweet("lang") = json.getString("lang")
+          tweet("retweeted") = json.getBoolean("retweeted")
+          tweet("favorited") = json.getBoolean("favorited")
 
-      // place
-      tweet("country_code") = JsonUtil.getNestedObjectValue(json, "place", "country_code")
-      tweet("place_name") = JsonUtil.getNestedObjectValue(json, "place", "name")
+          // user
+          tweet("user_id") = JsonUtil.getNestedObjectValue(json, "user", "id")
+          tweet("user_location") = JsonUtil.getNestedObjectValue(json, "user", "location")
+          tweet("user_statuses_count") = JsonUtil.getNestedObjectValue(json, "user", "statuses_count")
+          tweet("user_created_at") = JsonUtil.getNestedObjectValue(json, "user", "created_at")
+          tweet("user_lang") = JsonUtil.getNestedObjectValue(json, "user", "lang")
 
-      // entities
-      var strHashtags = ""
-      val hashtags = json.getJSONObject("entities").getJSONArray("hashtags")
+          // place
+          tweet("country_code") = JsonUtil.getNestedObjectValue(json, "place", "country_code")
+          tweet("place_name") = JsonUtil.getNestedObjectValue(json, "place", "name")
 
-      for(i <- 0 to hashtags.length() - 1) {
-        strHashtags += hashtags.getJSONObject(i).getString("text") + " "
+          // entities
+          var strHashtags = ""
+          val hashtags = json.getJSONObject("entities").getJSONArray("hashtags")
+
+          for (i <- 0 to hashtags.length() - 1) {
+            strHashtags += hashtags.getJSONObject(i).getString("text") + " "
+          }
+
+          tweet("hashtags_str") = strHashtags
+          tweet("candidate") = this.findCandidate(tweet("text").toString, tweet("hashtags_str").toString)
+
+          // append in correct file according to the tweet's date
+          var write = Json(DefaultFormats).write(tweet).toString
+
+          val s: String = tweet("created_at").toString
+          val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
+          val date: Date = simpleDateFormat.parse(s);
+          val outputFile = "./output/" + new SimpleDateFormat("yyyy-MM-dd").format(date) + ".json"
+
+          // append to new line only if the file contains at least 1 tweet
+          if ((new File(outputFile).exists()) && Source.fromFile(outputFile).getLines().length > 0) {
+            write = "\n" + write
+          }
+
+          val fw = new FileWriter(outputFile, true)
+          fw.write(write)
+          fw.close()
+
+        } catch {
+          case e: Exception => {
+            println("WARNING: " + e.getMessage)
+          }
+            lineError += 1
+            break
+        }
       }
-
-      tweet("hashtags_str") = strHashtags
-      tweet("candidate") = this.findCandidate(tweet("text").toString, tweet("hashtags_str").toString)
-
-      var write = Json(DefaultFormats).write(tweet).toString
-      if ((lineNumber + 1) < linesLength) {
-        write += "," + "\n" // append in new line
-      }
-
-      val fw = new FileWriter("./output/" + outputFile, true)
-      fw.write(write)
-      fw.close()
-
-      lineNumber += 1
     }
+
+    // at end
+    println(lineError + " tweets have not been extracted (" + ((lineError.toFloat/linesLength.toFloat) * 100) + "% of failure).")
   }
 }
