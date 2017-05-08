@@ -11,13 +11,13 @@ object Main {
      * normalize them and then write in the output/ directory.
      */
     val tn = new TweetNormalizer
-    tn.transform("tweets.json", "test.json")
+    tn.transform("sample-300.json")
 
     /*
      * run Spark: set data frame and make queries (SQL like)
      */
     val sa = new SparkAnalysis
-    sa.runQueries("test.json")
+    sa.runQueries()
     sa.stop()
   }
 }
