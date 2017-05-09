@@ -23,7 +23,7 @@ class TweetFrSentiment {
   }
 
   def getSentiment(tweet :String ): Unit = {
-    var words = wordExp.findAllIn(StringUtils.stripAccents(test).toLowerCase).toSet
+    var words = wordExp.findAllIn(StringUtils.stripAccents(tweet).toLowerCase).toSet
     //for (word <- words) println("The word is : " + word + "\nScore : " + sentiments.get(word).getOrElse(0).asInstanceOf[Int])
     val r = words.map(word => (word, sentiments.get(word).getOrElse(3).asInstanceOf[Int])).filter( (t) => t._2 != 3)
     val size = r.size
