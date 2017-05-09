@@ -22,11 +22,12 @@ class TweetFrSentiment {
     }
   }
 
-  def getSentiment(tweet :String ): Unit = {
+  def getSentiment(tweet :String ): Double = {
     var words = wordExp.findAllIn(StringUtils.stripAccents(tweet).toLowerCase).toSet
     //for (word <- words) println("The word is : " + word + "\nScore : " + sentiments.get(word).getOrElse(0).asInstanceOf[Int])
     val r = words.map(word => (word, sentiments.get(word).getOrElse(3).asInstanceOf[Int])).filter( (t) => t._2 != 3)
-    val size = r.size
+    var size = r.size
+    if (size == 0) size = 1
     val sum = r.foldLeft(0.0)(_+_._2)
     val mean: Double = sum / size
     //println("\nThe sum is : " + sum)

@@ -67,6 +67,8 @@ class TweetNormalizer {
     "asselineau"
   )
 
+  val TweetFrSent = new TweetFrSentiment
+
   private def findCandidate(text: String, hashtags: String): String = {
     var candidateFound = ""
     candidates.foreach(c => {
@@ -153,6 +155,9 @@ class TweetNormalizer {
 
           tweet("hashtags_str") = strHashtags
           tweet("candidate") = this.findCandidate(tweet("text").toString, tweet("hashtags_str").toString)
+
+          // sentiment measured
+          tweet("sentiment") = TweetFrSent.getSentiment(tweet("text").toString)
 
           // append in correct file according to the tweet's date
           var write = Json(DefaultFormats).write(tweet).toString
