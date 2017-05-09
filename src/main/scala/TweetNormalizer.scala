@@ -52,7 +52,7 @@ object JsonUtil {
 
 class TweetNormalizer {
 
-  val candidates = Seq(
+  private val candidates = Seq(
     "melenchon",
     "cheminade",
     "le pen",
@@ -67,25 +67,40 @@ class TweetNormalizer {
     "asselineau"
   )
 
-  val TweetFrSent = new TweetFrSentiment
+  private val TweetFrSent = new TweetFrSentiment
 
-  private def findCandidate(text: String, hashtags: String): String = {
-    var candidateFound = ""
+  private def getCandidate(text: String): String = {
+    var candidateFound: String = null
+    var candidateFoundTotal = 0
+
+    // find if only one candidate is present in the tweet
     candidates.foreach(c => {
       if (text.toLowerCase.contains(c)) {
         candidateFound = c
+        candidateFoundTotal += 1
       }
     })
 
-    if (candidateFound.eq("")) {
-      candidates.foreach(c => {
-        if (hashtags.toLowerCase.contains(c)) {
-          candidateFound = c
-        }
-      })
+    // ignore the tweet if the text contains more than one candidate
+    if (candidateFoundTotal > 1) {
+      return ""
     }
 
     return candidateFound
+  }
+
+
+  private def findTotalCandidates(text: String): Integer = {
+    var candidateFoundTotal = 0
+
+    // find if only one candidate is present in the tweet
+    candidates.foreach(c => {
+      if (text.toLowerCase.contains(c)) {
+        candidateFoundTotal += 1
+      }
+    })
+
+    return candidateFoundTotal
   }
 
   def transform(inputFile: String): Unit = {
@@ -99,6 +114,7 @@ class TweetNormalizer {
     val linesLength = Source.fromFile(filename).getLines().length
     var lineNumber = 0
     var lineError = 0
+    var line
 
     println("######")
     println("Extracting " + linesLength + " tweets from " + filename)
@@ -134,6 +150,14 @@ class TweetNormalizer {
           tweet("retweeted") = json.getBoolean("retweeted")
           tweet("favorited") = json.getBoolean("favorited")
 
+          /**
+            * If the text contained in the tweet contains more than 1 candidate, we ignore it
+            * because we cannot judge the associated sentiment for the candidates..
+            */
+          if (this.findTotalCandidates(tweet("text").toString) > 1) {
+            break
+          }
+
           // user
           tweet("user_id") = JsonUtil.getNestedObjectValue(json, "user", "id")
           tweet("user_location") = JsonUtil.getNestedObjectValue(json, "user", "location")
@@ -154,7 +178,9 @@ class TweetNormalizer {
           }
 
           tweet("hashtags_str") = strHashtags
-          tweet("candidate") = this.findCandidate(tweet("text").toString, tweet("hashtags_str").toString)
+          tweet("candidate") = this.getCandidate(tweet("text").toString)
+
+          // custom
 
           // sentiment measured
           tweet("sentiment") = TweetFrSent.getSentiment(tweet("text").toString)
