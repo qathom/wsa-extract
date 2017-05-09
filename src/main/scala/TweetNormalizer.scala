@@ -114,7 +114,7 @@ class TweetNormalizer {
     val linesLength = Source.fromFile(filename).getLines().length
     var lineNumber = 0
     var lineError = 0
-    var line
+    var lineIgnored = 0
 
     println("######")
     println("Extracting " + linesLength + " tweets from " + filename)
@@ -155,6 +155,7 @@ class TweetNormalizer {
             * because we cannot judge the associated sentiment for the candidates..
             */
           if (this.findTotalCandidates(tweet("text").toString) > 1) {
+            lineIgnored += 1
             break
           }
 
@@ -214,5 +215,6 @@ class TweetNormalizer {
 
     // at end
     println(lineError + " tweets have not been extracted (" + ((lineError.toFloat/linesLength.toFloat) * 100) + "% of failure).")
+    println(lineIgnored + "have been ignored.")
   }
 }
