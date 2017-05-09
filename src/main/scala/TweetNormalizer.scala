@@ -214,7 +214,7 @@ class TweetNormalizer {
     }
 
     // at end
-    println(lineError + " tweets have not been extracted (" + ((lineError.toFloat/linesLength.toFloat) * 100) + "% of failure).")
-    println(lineIgnored + "have been ignored.")
+    println(lineError + " " + "tweets have not been extracted (" + ((lineError.toFloat/linesLength.toFloat) * 100) + "% of failure).")
+    println(lineIgnored + " " + "have been ignored.")
   }
 }
