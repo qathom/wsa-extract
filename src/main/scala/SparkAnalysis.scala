@@ -2,6 +2,7 @@ import java.io.File
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{date_format, to_date, unix_timestamp}
+import plotly._, element._, layout._, Plotly._
 
 case class Tweet()
 
@@ -24,7 +25,7 @@ class SparkAnalysis() {
 
   }
 
-  def runQueries(): Unit = {
+  def run(): Unit = {
     val spark = this.createSession()
 
     import spark.implicits._
@@ -61,6 +62,26 @@ class SparkAnalysis() {
     // tweets.select("text").show()
     // tweets.filter($"likes" > 21).show()
     // tweets.groupBy("age").count().show()
+
+
+    // build charts
+    val x = 0.0 to 10.0 by 0.1
+    val y1 = x.map(d => 2.0 * d + util.Random.nextGaussian())
+    val y2 = x.map(math.exp)
+
+    val plot = Seq(
+      Scatter(
+        x, y1, name = "Approx twice"
+      ),
+      Scatter(
+        x, y2, name = "Exp"
+      )
+    )
+
+    plot.plot(
+      title = "Curves",
+      path = "./output/plot.html"
+    )
   }
 
   def stop(): Unit = {
