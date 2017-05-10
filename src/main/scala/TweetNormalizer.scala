@@ -151,10 +151,11 @@ class TweetNormalizer {
           tweet("favorited") = json.getBoolean("favorited")
 
           /**
-            * If the text contained in the tweet contains more than 1 candidate, we ignore it
-            * because we cannot judge the associated sentiment for the candidates..
+            * If the text contained in the tweet contains no or more than 1 candidate, we ignore it
+            * because we want political tweets and we cannot judge the associated sentiment
+            * if more than one candidate is present
             */
-          if (this.findTotalCandidates(tweet("text").toString) > 1) {
+          if (this.findTotalCandidates(tweet("text").toString) != 1) {
             lineIgnored += 1
             break
           }
