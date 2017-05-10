@@ -216,6 +216,6 @@ class TweetNormalizer {
 
     // at end
     println(lineError + " " + "tweets have not been extracted (" + ((lineError.toFloat/linesLength.toFloat) * 100) + "% of failure).")
-    println(lineIgnored + " " + "have been ignored.")
+    println(lineIgnored + " " + "non political tweets have been ignored" + " (" + ((lineIgnored.toFloat/linesLength.toFloat) * 100) + "% of total).")
   }
 }
