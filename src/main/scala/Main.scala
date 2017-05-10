@@ -10,7 +10,15 @@ object Main   {
      * normalize them and then write in the output/ directory.
      */
     val tn = new TweetNormalizer
-    tn.transform("sample-300.json")
+    tn.transform("tweets.json")
+
+    /**
+      * Show statistics from output such as
+      * the ratio of political tweets
+      */
+    val ts = new TweetStatistics
+    ts.setStats()
+    ts.showRatios()
 
     /*
      * run Spark: set data frame and make queries (SQL like)
