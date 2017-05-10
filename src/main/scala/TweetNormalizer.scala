@@ -2,12 +2,13 @@ import java.io.{File, FileWriter}
 import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
+import org.apache.commons.lang3.StringUtils
 import org.codehaus.jettison.json.JSONObject
 import org.json4s.JsonAST.{JInt, JString}
 import org.json4s.{DefaultFormats, JValue}
 import org.json4s.jackson.Json
-import scala.util.control.Breaks._
 
+import scala.util.control.Breaks._
 import scala.io.Source
 
 /**
@@ -52,6 +53,7 @@ object JsonUtil {
 
 class TweetNormalizer {
 
+  /*
   private val candidates = Seq(
     "melenchon",
     "cheminade",
@@ -66,42 +68,80 @@ class TweetNormalizer {
     "hamon",
     "asselineau"
   )
+  */
 
   private val TweetFrSent = new TweetFrSentiment
+
+  val datePol = new scala.collection.mutable.HashMap[Date, Int]()
+  val dateNonPol = new scala.collection.mutable.HashMap[Date, Int]()
+
+  val hmCandidat = new scala.collection.mutable.HashMap[String, String]()
+  hmCandidat.put("@benoithamon", "Hamon")
+  // Remplir le Hashmap
+
+
+  val hashTagExp = """\B#\w*[a-zA-Z]+\w*""".r
+  val mentionExp = """\B@\w*[a-zA-Z]+\w*""".r
 
   private def getCandidate(text: String): String = {
     var candidateFound: String = null
     var candidateFoundTotal = 0
 
-    // find if only one candidate is present in the tweet
-    candidates.foreach(c => {
-      if (text.toLowerCase.contains(c)) {
-        candidateFound = c
-        candidateFoundTotal += 1
+    val hashtag = hashTagExp.findAllIn(StringUtils.stripAccents(text).toLowerCase).toSet
+    val mention = mentionExp.findAllIn(StringUtils.stripAccents(text).toLowerCase).toSet
+
+    val hotWords = hashtag ++ mention
+
+
+    hotWords.foreach(hw => {
+
+      if (hmCandidat.contains(hw)){
+
+        if (hmCandidat(hw) == candidateFound || candidateFound == null) {
+          candidateFound = hmCandidat(hw)
+        }else{
+          candidateFound = null
+          break
+        }
       }
     })
-
-    // ignore the tweet if the text contains more than one candidate
-    if (candidateFoundTotal > 1) {
-      return ""
-    }
 
     return candidateFound
   }
 
 
-  private def findTotalCandidates(text: String): Integer = {
-    var candidateFoundTotal = 0
+  val polWords = Seq("#Presidentielle")
+  // Remplir la Seq
 
-    // find if only one candidate is present in the tweet
-    candidates.foreach(c => {
-      if (text.toLowerCase.contains(c)) {
-        candidateFoundTotal += 1
+  private def isPolitique(text: String): Boolean = {
+    val hashtag = hashTagExp.findAllIn(StringUtils.stripAccents(text).toLowerCase).toSet
+    val mention = mentionExp.findAllIn(StringUtils.stripAccents(text).toLowerCase).toSet
+
+    val hotWords = hashtag ++ mention
+
+    hotWords.foreach(hw => {
+
+      if (polWords.contains(hw)){
+        return true
       }
     })
-
-    return candidateFoundTotal
+    return false
   }
+
+  /*
+    private def findTotalCandidates(text: String): Integer = {
+      var candidateFoundTotal = 0
+
+      // find if only one candidate is present in the tweet
+      candidates.foreach(c => {
+        if (text.toLowerCase.contains(c)) {
+          candidateFoundTotal += 1
+        }
+      })
+
+      return candidateFoundTotal
+    }
+   */
 
   def transform(inputFile: String): Unit = {
     val filename = "./input/" + inputFile
@@ -116,11 +156,17 @@ class TweetNormalizer {
     var lineError = 0
     var lineIgnored = 0
 
+    // Pour les statistiques des tweets politiques ou non
+    var tweet_pol = 0
+    var tweet_non_pol = 0
+
     println("######")
     println("Extracting " + linesLength + " tweets from " + filename)
     println("######")
 
     var currentLine: String = ""
+
+    var dateStat : Date = null
 
     for (line <- Source.fromFile(filename).getLines()) {
       breakable {
@@ -140,25 +186,53 @@ class TweetNormalizer {
           val json = new JSONObject(currentLine);
           val tweet = collection.mutable.Map[String, Any]()
 
-          // flat
+
+          // Lève une exception dans le catch si la ligne n'est pas un tweet
+          var test = json.getString("created_at")
+
+
+          // Préparation du format de date
+          val s: String = json.getString("created_at").toString
+          val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
+          val date: Date = simpleDateFormat.parse(s);
+          dateStat = date
+
+          // Test si c'est un tweet politique ou non
+          if (isPolitique(json.getString("text"))){
+
+            // Incrémente les tweets politiques pour une date
+            if(datePol.contains(date)){
+              datePol(date) = datePol(date)+1
+            } else {
+              datePol.put(date, 1)
+            }
+
+          } else {
+
+            // Incrémente les tweets non politiques pour une date
+            if(dateNonPol.contains(date)){
+              dateNonPol(date) = dateNonPol(date)+1
+            } else {
+              dateNonPol.put(date, 1)
+            }
+
+            // On sort de la boucle géante
+            break
+          }
+
+          // Ajouts des attributs essentiels à l'analyse
           tweet("created_at") = json.getString("created_at")
           tweet("id_str") = json.getString("id_str")
+          tweet("candidat") = getCandidate(json.getString("text").toString())
+          tweet("sentiment") = TweetFrSent.getSentiment(json.getString("text").toString())
+
+          // Ajouter tous les autres champs dont on pense avoir besoin
           tweet("text") = json.getString("text")
           tweet("retweet_count") = json.getInt("retweet_count")
           tweet("favorite_count") = json.getInt("favorite_count")
           tweet("lang") = json.getString("lang")
           tweet("retweeted") = json.getBoolean("retweeted")
           tweet("favorited") = json.getBoolean("favorited")
-
-          /**
-            * If the text contained in the tweet contains no or more than 1 candidate, we ignore it
-            * because we want political tweets and we cannot judge the associated sentiment
-            * if more than one candidate is present
-            */
-          if (this.findTotalCandidates(tweet("text").toString) != 1) {
-            lineIgnored += 1
-            break
-          }
 
           // user
           tweet("user_id") = JsonUtil.getNestedObjectValue(json, "user", "id")
@@ -174,28 +248,19 @@ class TweetNormalizer {
           // entities
           var strHashtags = ""
           val hashtags = json.getJSONObject("entities").getJSONArray("hashtags")
-
           for (i <- 0 to hashtags.length() - 1) {
             strHashtags += hashtags.getJSONObject(i).getString("text") + " "
           }
 
           tweet("hashtags_str") = strHashtags
-          tweet("candidate") = this.getCandidate(tweet("text").toString)
 
-          // custom
 
-          // sentiment measured
-          tweet("sentiment") = TweetFrSent.getSentiment(tweet("text").toString)
 
-          // append in correct file according to the tweet's date
+          // Append in correct file according to the tweet's date
           var write = Json(DefaultFormats).write(tweet).toString
-
-          val s: String = tweet("created_at").toString
-          val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
-          val date: Date = simpleDateFormat.parse(s);
           val outputFile = "./output/" + new SimpleDateFormat("yyyy-MM-dd").format(date) + ".json"
 
-          // append to new line only if the file contains at least 1 tweet
+          // Append to new line only if the file contains at least 1 tweet
           if ((new File(outputFile).exists()) && Source.fromFile(outputFile).getLines().length > 0) {
             write = "\n" + write
           }
@@ -216,6 +281,19 @@ class TweetNormalizer {
 
     // at end
     println(lineError + " " + "tweets have not been extracted (" + ((lineError.toFloat/linesLength.toFloat) * 100) + "% of failure).")
-    println(lineIgnored + " " + "non political tweets have been ignored" + " (" + ((lineIgnored.toFloat/linesLength.toFloat) * 100) + "% of total).")
+    println(lineIgnored + " " + "have been ignored.")
+
+    // Ecriture d'un Json pour les statistiques des tweet (Pol ou non Pol) par jour
+    val outputStatFile = "./output/" + new SimpleDateFormat("yyyy-MM-dd").format(dateStat) + ".json"
+    val stats = collection.mutable.Map[String, Any]()
+    val fwStat = new FileWriter(outputStatFile, true)
+    for((k,v) <- dateNonPol){
+      stats("Date") = k
+      stats("tweetTotal") = v + datePol.get(k).asInstanceOf[Int]
+      stats("tweetPol") = datePol.get(k).asInstanceOf[Int]
+      fwStat.write( Json(DefaultFormats).write(stats).toString + "\n")
+    }
+    fwStat.close()
+
   }
 }
