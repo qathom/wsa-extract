@@ -8,7 +8,7 @@ class TweetFrSentiment {
   private val mentionExp = """\B@\w*[a-zA-Z]+\w*""".r
   private val wordExp = """[a-zA-Z]+""".r
   private val sentiments = new scala.collection.mutable.HashMap[String, Int]()
-  private val stopwords: Seq[String] = Source.fromFile("./input/stopwords.txt").getLines().toSeq
+  private val stopwords: Seq[String] = Source.fromFile("./input/stopwords.txt").getLines().map(w => StringUtils.stripAccents(w)).toSeq
 
   for (line <- Source.fromFile("./input/FEEL-1.csv").getLines()) {
     if (!line.startsWith("id")) {
