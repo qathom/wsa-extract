@@ -1,5 +1,6 @@
 import scala.io.Source
 import org.apache.commons.lang3.StringUtils
+import scala.io.Source
 
 class TweetFrSentiment {
 
@@ -7,6 +8,7 @@ class TweetFrSentiment {
   private val mentionExp = """\B@\w*[a-zA-Z]+\w*""".r
   private val wordExp = """[a-zA-Z]+""".r
   private val sentiments = new scala.collection.mutable.HashMap[String, Int]()
+  private val stopwords: Seq[String] = Source.fromFile("./input/stopwords.txt").getLines().toSeq
 
   for (line <- Source.fromFile("./input/FEEL-1.csv").getLines()) {
     if (!line.startsWith("id")) {
@@ -23,8 +25,9 @@ class TweetFrSentiment {
   }
 
   def getSentiment(tweet :String ): Double = {
-    var words = wordExp.findAllIn(StringUtils.stripAccents(tweet).toLowerCase).toSet
+    val words = wordExp.findAllIn(StringUtils.stripAccents(tweet).toLowerCase).toSet.filter(w => !stopwords.contains(w))
     //for (word <- words) println("The word is : " + word + "\nScore : " + sentiments.get(word).getOrElse(0).asInstanceOf[Int])
+
     val r = words.map(word => (word, sentiments.get(word).getOrElse(3).asInstanceOf[Int])).filter( (t) => t._2 != 3)
     var size = r.size
     if (size == 0) size = 1
