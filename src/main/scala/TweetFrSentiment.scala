@@ -8,7 +8,7 @@ class TweetFrSentiment {
   private val wordExp = """[a-zA-Z]+""".r
   private val sentiments = new scala.collection.mutable.HashMap[String, Int]()
 
-  for (line <- Source.fromFile("input/FEEL-1.csv").getLines()) {
+  for (line <- Source.fromFile("./input/FEEL-1.csv").getLines()) {
     if (!line.startsWith("id")) {
       val sp = line.split(";")
       var score: Int = 1
