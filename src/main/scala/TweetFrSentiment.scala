@@ -28,7 +28,7 @@ class TweetFrSentiment {
     val words = wordExp.findAllIn(StringUtils.stripAccents(tweet).toLowerCase).toSet.filter(w => !stopwords.contains(w))
     //for (word <- words) println("The word is : " + word + "\nScore : " + sentiments.get(word).getOrElse(0).asInstanceOf[Int])
 
-    val r = words.map(word => (word, sentiments.get(word).getOrElse(3).asInstanceOf[Int])).filter( (t) => t._2 != 3)
+    val r = words.map(word => (word, sentiments.get(word).getOrElse(0).asInstanceOf[Int]))
     var size = r.size
     if (size == 0) size = 1
     val sum = r.foldLeft(0.0)(_+_._2)
