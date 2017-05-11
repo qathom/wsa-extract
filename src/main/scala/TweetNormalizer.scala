@@ -54,20 +54,20 @@ object JsonUtil {
 class TweetNormalizer {
 
   private val candidates: Map[String, Set[String]] = Map(
-    "melenchon" -> Set(""),
-    "cheminade" -> Set(""),
-    "le pen" -> Set(""),
-    "dupont aignan" -> Set(""),
-    "arthaud" -> Set(""),
-    "lassalle" -> Set(""),
-    "poutou" -> Set(""),
-    "fillon" -> Set(""),
-    "macron" -> Set("enmarche"),
-    "hamon" -> Set(""),
-    "asselineau" -> Set("")
+    "arthaud" -> Set("n_arthaud", "Arthaud", "LutteOuvrière", "LO"),
+    "asselineau" -> Set("UPR_Asselineau", "JeVoteAsselineau"),
+    "cheminade" -> Set("JCheminade", "Cheminade2017", "CHEMINADE", "JeVoteCheminade", "JacquesCheminade"),
+    "dupont aignan" -> Set("dupontaignan", "DupontAignan", "JeVoteDupontAignan"),
+    "fillon" -> Set("FrancoisFillon", "TousFillon", "Fillon2017_fr","Fillon", "Fillon2017", "FF2017", "FillonGate"),
+    "hamon" -> Set("benoithamon", "Hamon2017", "Hamon2022"),
+    "lassalle" -> Set("jeanlassalle", "JeVoteLassalle"),
+    "le pen" -> Set("MLP_officiel", "Marine2017", "LePen", "MLP", "MLPTF1"),
+    "macron" -> Set("EmmanuelMacron", "Macron", "EM", "EnMarche", "JeVoteMacron", "Macron2017", "MacronLeak", "MacronGate"),
+    "melenchon" -> Set("JLMelenchon‏","Melenchon", "JLM"),
+    "poutou" -> Set("PhilippePoutou", "JeVotePoutou", "Poutou2017", "NPA")
   )
 
-  private val presidentialElections: Set[String] = Set("#Presidentielle")
+  private val presidentialElections: Set[String] = Set("Presidentielle", "PCF", "Groupe_PRG_CI", "PRG", "GauchePS", "PS", "MoDem", "LiberalUMP", "UMP", "MPF", "FN_officiel", "FN", "FNGate", "lesRépublicains", "LR")
 
   private val TweetFrSent = new TweetFrSentiment
 
