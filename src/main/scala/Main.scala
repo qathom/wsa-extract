@@ -1,6 +1,3 @@
-import scala.concurrent.ops._
-
-
 /**
   * Main
   */
