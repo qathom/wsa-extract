@@ -70,6 +70,7 @@ class TweetNormalizer {
   private val presidentialElections: Set[String] = Set("Presidentielle", "PCF", "Groupe_PRG_CI", "PRG", "GauchePS", "PS", "MoDem", "LiberalUMP", "UMP", "MPF", "FN_officiel", "FN", "FNGate", "lesRépublicains", "LR")
 
   private val TweetFrSent = new TweetFrSentiment
+  TweetFrSent.init()
 
   // private val hashTagExp = """\B#\w*[a-zA-Z]+\w*""".r
   // private val mentionExp = """\B@\w*[a-zA-Z]+\w*""".r
