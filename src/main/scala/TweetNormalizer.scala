@@ -142,43 +142,43 @@ class TweetNormalizer {
 
           // add primary data
           tweet("created_at") = json.getString("created_at")
-          tweet("id_str") = json.getString("id_str")
 
-          tweet("text") = json.getString("text")
-          tweet("retweet_count") = json.getInt("retweet_count")
-          tweet("favorite_count") = json.getInt("favorite_count")
-          tweet("lang") = json.getString("lang")
-          tweet("retweeted") = json.getBoolean("retweeted")
-          tweet("favorited") = json.getBoolean("favorited")
 
-          // user
-          tweet("user_id") = JsonUtil.getNestedObjectValue(json, "user", "id")
-          tweet("user_location") = JsonUtil.getNestedObjectValue(json, "user", "location")
-          tweet("user_statuses_count") = JsonUtil.getNestedObjectValue(json, "user", "statuses_count")
-          tweet("user_created_at") = JsonUtil.getNestedObjectValue(json, "user", "created_at")
-          tweet("user_lang") = JsonUtil.getNestedObjectValue(json, "user", "lang")
+          if (this.concernsPolitics(json.getString("text").toString())){
+            tweet("id_str") = json.getString("id_str")
 
-          // place
-          tweet("country_code") = JsonUtil.getNestedObjectValue(json, "place", "country_code")
-          tweet("place_name") = JsonUtil.getNestedObjectValue(json, "place", "name")
+            tweet("text") = json.getString("text")
+            tweet("retweet_count") = json.getInt("retweet_count")
+            tweet("favorite_count") = json.getInt("favorite_count")
+            tweet("lang") = json.getString("lang")
+            tweet("retweeted") = json.getBoolean("retweeted")
+            tweet("favorited") = json.getBoolean("favorited")
 
-          if (this.concernsPolitics(json.getString("text").toString())) {
+            // user
+            tweet("user_id") = JsonUtil.getNestedObjectValue(json, "user", "id")
+            tweet("user_location") = JsonUtil.getNestedObjectValue(json, "user", "location")
+            tweet("user_statuses_count") = JsonUtil.getNestedObjectValue(json, "user", "statuses_count")
+            tweet("user_created_at") = JsonUtil.getNestedObjectValue(json, "user", "created_at")
+            tweet("user_lang") = JsonUtil.getNestedObjectValue(json, "user", "lang")
+
+            // place
+            tweet("country_code") = JsonUtil.getNestedObjectValue(json, "place", "country_code")
+            tweet("place_name") = JsonUtil.getNestedObjectValue(json, "place", "name")
             tweet("candidate") = getCandidate(json.getString("text").toString())
             tweet("sentiment") = TweetFrSent.getSentiment(json.getString("text").toString())
+            // append in correct file according to the tweet's date
+            var write = Json(DefaultFormats).write(tweet).toString
+            val outputFile = this.getOutputFile(tweet("text").toString, tweet("created_at").toString)
+
+            ////#########
+            // append to new line only if the file contains at least 1 tweet
+            if ((new File(outputFile).exists()) && Source.fromFile(outputFile).getLines().length > 0) {
+              write = "\n" + write
+            }
+            val fw = new FileWriter(outputFile, true)
+            fw.write(write)
+            fw.close()
           }
-
-          // append in correct file according to the tweet's date
-          var write = Json(DefaultFormats).write(tweet).toString
-          val outputFile = this.getOutputFile(tweet("text").toString, tweet("created_at").toString)
-
-          // append to new line only if the file contains at least 1 tweet
-          if ((new File(outputFile).exists()) && Source.fromFile(outputFile).getLines().length > 0) {
-            write = "\n" + write
-          }
-
-          val fw = new FileWriter(outputFile, true)
-          fw.write(write)
-          fw.close()
 
         } catch {
           case e: Exception => {
