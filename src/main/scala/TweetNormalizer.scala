@@ -75,8 +75,8 @@ class TweetNormalizer {
   // private val mentionExp = """\B@\w*[a-zA-Z]+\w*""".r
 
   private def getCandidate(text: String): String = {
-    val words = text.replace("#", "").replace("@", "").toLowerCase.split(" +").toSeq.map(w => StringUtils.stripAccents(w).toLowerCase)
-    val candidatesFound = words.filter(w => candidates.exists(c => c._1 == w || c._2.contains(w)))
+    val words = text.replace("#", "").replace("@", "").toLowerCase.split(" +").toSeq.map(w => StringUtils.stripAccents(w))
+    val candidatesFound = words.filter(w => candidates.exists(c => c._1 == w || c._2.contains(w))).distinct
 
     if (candidatesFound.size != 1) {
       // ignore tweet
@@ -87,10 +87,6 @@ class TweetNormalizer {
   }
 
   private def concernsPolitics(text: String): Boolean = {
-    // val hashtag = hashTagExp.findAllIn(StringUtils.stripAccents(text).toLowerCase).toSet
-    // val mention = mentionExp.findAllIn(StringUtils.stripAccents(text).toLowerCase).toSet
-    // return (hashtag ++ mention).exists(w => presidentialElections.contains(w)) ||
-    //   (hashtag ++ mention).exists(w => candidates.valuesIterator.contains(w))
     val words = text.replace("#", "").replace("@", "").toLowerCase.split(" +").toSeq.map(w => StringUtils.stripAccents(w).toLowerCase)
     return words.exists(w => presidentialElections.contains(w)) || words.exists(w => candidates.exists(c => c._1 == w || c._2.contains(w)))
   }
@@ -146,8 +142,6 @@ class TweetNormalizer {
           // add primary data
           tweet("created_at") = json.getString("created_at")
           tweet("id_str") = json.getString("id_str")
-          tweet("candidate") = getCandidate(json.getString("text").toString())
-          tweet("sentiment") = TweetFrSent.getSentiment(json.getString("text").toString())
 
           tweet("text") = json.getString("text")
           tweet("retweet_count") = json.getInt("retweet_count")
@@ -166,6 +160,11 @@ class TweetNormalizer {
           // place
           tweet("country_code") = JsonUtil.getNestedObjectValue(json, "place", "country_code")
           tweet("place_name") = JsonUtil.getNestedObjectValue(json, "place", "name")
+
+          if (this.concernsPolitics(json.getString("text").toString())) {
+            tweet("candidate") = getCandidate(json.getString("text").toString())
+            tweet("sentiment") = TweetFrSent.getSentiment(json.getString("text").toString())
+          }
 
           // append in correct file according to the tweet's date
           var write = Json(DefaultFormats).write(tweet).toString
