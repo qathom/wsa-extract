@@ -17,6 +17,7 @@ class SparkAnalysis() {
       // .config("spark.some.config.option", "some-value")
       .config("spark.master", "local")
       .config("spark.driver.bindAddress", "127.0.0.1")
+      .config("spark.executor.cores","6")
       .getOrCreate()
 
     this.session = session
