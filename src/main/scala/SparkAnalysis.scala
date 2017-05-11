@@ -30,7 +30,6 @@ class SparkAnalysis() {
 
     import spark.implicits._
 
-
     val tweets = spark.read.json("./output/*.json").as[Tweet]
       .toDF() // params => rename cols
       .cache()
