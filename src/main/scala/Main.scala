@@ -30,7 +30,7 @@ object Main{
             def run {
               val tn = new TweetNormalizer
               while (q.size() > 0) {
-                val fileName = q.take().asInstanceOf[java.io.File].getName()
+                val fileName = q.take()
                 println("Processing file " + fileName)
                 tn.transform(fileName)
               }
