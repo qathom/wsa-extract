@@ -10,19 +10,22 @@ class TweetFrSentiment {
   private val sentiments = new scala.collection.mutable.HashMap[String, Int]()
   private val stopwords: Seq[String] = Source.fromFile("./input/stopwords.txt").getLines().map(w => StringUtils.stripAccents(w)).toSeq
 
-  for (line <- Source.fromFile("./input/FEEL-1.csv").getLines()) {
-    if (!line.startsWith("id")) {
-      val sp = line.split(";")
-      var score: Int = 1
-      val eval = sp(2)
-      if (!sp(1).contains(" ")) {
-        if (sp(2).equals("negative")) {
-          score = (score * -1)
+  def init(): Unit ={
+    for (line <- Source.fromFile("./input/FEEL-1.csv").getLines()) {
+      if (!line.startsWith("id")) {
+        val sp = line.split(";")
+        var score: Int = 1
+        val eval = sp(2)
+        if (!sp(1).contains(" ")) {
+          if (sp(2).equals("negative")) {
+            score = (score * -1)
+          }
+          sentiments.put(StringUtils.stripAccents(sp(1)), score)
         }
-        sentiments.put(StringUtils.stripAccents(sp(1)), score)
       }
     }
   }
+
 
   def getSentiment(tweet :String ): Double = {
     val words = wordExp.findAllIn(StringUtils.stripAccents(tweet).toLowerCase).toSet.filter(w => !stopwords.contains(w))
