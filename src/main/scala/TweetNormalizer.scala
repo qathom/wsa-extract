@@ -122,9 +122,8 @@ class TweetNormalizer {
 
     var currentLine: String = ""
 
-    var isPolitical = false
-
     for (line <- Source.fromFile(filename).getLines()) {
+      var isPolitical = false
       breakable {
         currentLine = line
         lineNumber += 1
