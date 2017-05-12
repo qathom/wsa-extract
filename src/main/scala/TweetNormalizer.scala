@@ -143,9 +143,12 @@ class TweetNormalizer {
 
           // add primary data
           tweet("created_at") = json.getString("created_at")
-          tweet("id_str") = json.getString("id_str")
 
+          if (this.concernsPolitics(json.getString("text").toString())){
+
+          tweet("id_str") = json.getString("id_str")
           tweet("text") = json.getString("text")
+
           tweet("retweet_count") = json.getInt("retweet_count")
           tweet("favorite_count") = json.getInt("favorite_count")
           tweet("lang") = json.getString("lang")
@@ -163,23 +166,19 @@ class TweetNormalizer {
           tweet("country_code") = JsonUtil.getNestedObjectValue(json, "place", "country_code")
           tweet("place_name") = JsonUtil.getNestedObjectValue(json, "place", "name")
 
+          tweet("candidate") = getCandidate(json.getString("text").toString())
+          tweet("sentiment") = TweetFrSent.getSentiment(json.getString("text").toString())
 
-          if (this.concernsPolitics(json.getString("text").toString())){
-            isPolitical = true
+          }
+          // append in correct file according to the tweet's date
+          var write = Json(DefaultFormats).write(tweet).toString
+          val outputFile = this.getOutputFile(tweet("created_at").toString, true)
 
-            tweet("candidate") = getCandidate(json.getString("text").toString())
-            tweet("sentiment") = TweetFrSent.getSentiment(json.getString("text").toString())
-
-            }
-            // append in correct file according to the tweet's date
-            var write = Json(DefaultFormats).write(tweet).toString
-            val outputFile = this.getOutputFile(tweet("created_at").toString, isPolitical)
-
-            ////#########
-            // append to new line only if the file contains at least 1 tweet
-            if ((new File(outputFile).exists()) && Source.fromFile(outputFile).getLines().length > 0) {
-              write = "\n" + write
-            }
+          ////#########
+          // append to new line only if the file contains at least 1 tweet
+          if ((new File(outputFile).exists()) && Source.fromFile(outputFile).getLines().length > 0) {
+            write = "\n" + write
+          }
           val fw = new FileWriter(outputFile, true)
           fw.write(write)
           fw.close()
