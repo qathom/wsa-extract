@@ -92,13 +92,13 @@ class TweetNormalizer {
     return words.exists(w => presidentialElections.contains(w)) || words.exists(w => candidates.exists(c => c._1 == w || c._2.contains(w)))
   }
 
-  private def getOutputFile(createdAt: String, isPolitical: Boolean): String = {
+  private def getOutputFile(inputFileName: String ,createdAt: String, isPolitical: Boolean): String = {
     val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
     val date: Date = simpleDateFormat.parse(createdAt);
     val outputFilename = "./output/" + new SimpleDateFormat("yyyy-MM-dd").format(date)
-
+    val length = inputFileName.length
     if (isPolitical) {
-      return outputFilename + ".politics.json"
+      return outputFilename + inputFileName.substring(length-7,length-6) +".politics.json"
     } else {
       return outputFilename + ".json"
     }
@@ -171,7 +171,7 @@ class TweetNormalizer {
 
           // append in correct file according to the tweet's date
           var write = Json(DefaultFormats).write(tweet).toString
-          val outputFile = this.getOutputFile(tweet("created_at").toString, true)
+          val outputFile = this.getOutputFile(inputFile,tweet("created_at").toString, true)
 
           ////#########
           // append to new line only if the file contains at least 1 tweet
