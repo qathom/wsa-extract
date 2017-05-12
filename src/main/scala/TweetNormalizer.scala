@@ -180,10 +180,10 @@ class TweetNormalizer {
             // append to new line only if the file contains at least 1 tweet
             if ((new File(outputFile).exists()) && Source.fromFile(outputFile).getLines().length > 0) {
               write = "\n" + write
-            val fw = new FileWriter(outputFile, true)
-            fw.write(write)
-            fw.close()
-          }
+            }
+          val fw = new FileWriter(outputFile, true)
+          fw.write(write)
+          fw.close()
 
         } catch {
           case e: Exception => {
