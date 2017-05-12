@@ -169,7 +169,6 @@ class TweetNormalizer {
           tweet("candidate") = getCandidate(json.getString("text").toString())
           tweet("sentiment") = TweetFrSent.getSentiment(json.getString("text").toString())
 
-          }
           // append in correct file according to the tweet's date
           var write = Json(DefaultFormats).write(tweet).toString
           val outputFile = this.getOutputFile(tweet("created_at").toString, true)
@@ -182,6 +181,8 @@ class TweetNormalizer {
           val fw = new FileWriter(outputFile, true)
           fw.write(write)
           fw.close()
+          }
+
 
         } catch {
           case e: Exception => {
