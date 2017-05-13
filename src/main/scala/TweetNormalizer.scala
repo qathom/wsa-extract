@@ -101,9 +101,9 @@ class TweetNormalizer {
     val length = inputFileName.length
 
     if (isPolitical) {
-      return outputFilename + inputFileName.substring(length - 7, length - 5) + ".politics.json"
+      return outputFilename + ".politics.json"
     } else {
-      return outputFilename + inputFileName.substring(length - 7, length - 5) + ".json"
+      return outputFilename + ".json"
     }
   }
 
