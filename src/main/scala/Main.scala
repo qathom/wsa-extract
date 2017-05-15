@@ -1,17 +1,12 @@
 import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 import java.util.concurrent.CountDownLatch
-
-import plotly._
+import java.util.concurrent.ArrayBlockingQueue
 
 /**
   * Main
   */
-
-object Main{
-
-  import java.util.concurrent.ArrayBlockingQueue
-  import java.util.concurrent.{Executors,ExecutorService}
+object Main {
 
   def formatDate(enDate: String): String = {
     val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -57,17 +52,13 @@ object Main{
     val ts = new TweetStatistics
     ts.setStats()
     ts.showRatios()
-  }
 
     /*
      * run Spark: set data frame and make queries (SQL like)
      */
-    /*
     val sa = new SparkAnalysis
     sa.run()
     sa.stop()
-    */
-
 
     /*
      * build charts
