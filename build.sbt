@@ -13,6 +13,3 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies += "org.codehaus.jettison" % "jettison" % "1.3.7"
-
-libraryDependencies += "co.theasi" %% "plotly" % "0.2.0"
-libraryDependencies += "org.plotly-scala" %% "plotly-render" % "0.3.1"
