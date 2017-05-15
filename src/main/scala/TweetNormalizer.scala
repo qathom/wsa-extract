@@ -203,12 +203,13 @@ class TweetNormalizer {
               }
               source3.close()
             }
+
             val fw = new FileWriter(outputFile, true)
             try {
               fw.write(write)
-              fw.close()}finally {  fw.close()
+            } finally {
+              fw.close()
             }
-
           } catch {
             case e: Exception => {
               println("WARNING: " + e.getLocalizedMessage + " " + e.getCause + " " + e.getMessage)
