@@ -58,11 +58,11 @@ class TweetNormalizer {
     "arthaud" -> Set("n_arthaud", "Arthaud", "LutteOuvrière", "LO"),
     "asselineau" -> Set("UPR_Asselineau", "JeVoteAsselineau"),
     "cheminade" -> Set("JCheminade", "Cheminade2017", "CHEMINADE", "JeVoteCheminade", "JacquesCheminade"),
-    "dupont aignan" -> Set("dupontaignan", "DupontAignan", "JeVoteDupontAignan"),
+    "aignan" -> Set("dupontaignan", "DupontAignan", "JeVoteDupontAignan"),
     "fillon" -> Set("FrancoisFillon", "TousFillon", "Fillon2017_fr", "Fillon", "Fillon2017", "FF2017", "FillonGate"),
     "hamon" -> Set("benoithamon", "Hamon2017", "Hamon2022"),
     "lassalle" -> Set("jeanlassalle", "JeVoteLassalle"),
-    "le pen" -> Set("MLP_officiel", "Marine2017", "LePen", "MLP", "MLPTF1"),
+    "le_pen" -> Set("MLP_officiel", "Marine2017", "LePen", "MLP", "MLPTF1"),
     "macron" -> Set("EmmanuelMacron", "Macron", "EM", "EnMarche", "JeVoteMacron", "Macron2017", "MacronLeak", "MacronGate"),
     "melenchon" -> Set("JLMelenchon‏", "Melenchon", "JLM"),
     "poutou" -> Set("PhilippePoutou", "JeVotePoutou", "Poutou2017", "NPA")
@@ -77,7 +77,7 @@ class TweetNormalizer {
   // private val mentionExp = """\B@\w*[a-zA-Z]+\w*""".r
 
   private def getCandidate(text: String): String = {
-    val words = text.replace("#", "").replace("@", "").toLowerCase.split(" +").toSeq.map(w => StringUtils.stripAccents(w))
+    val words = text.replace("#", "").replace("@", "").toLowerCase.replace("le pen", "le_pen").replace("lepen", "le_pen").split(" +").toSeq.map(w => StringUtils.stripAccents(w))
     val candidatesFound = words.filter(w => candidates.exists(c => c._1 == w || c._2.contains(w))).distinct
 
     if (candidatesFound.size != 1) {
@@ -89,7 +89,7 @@ class TweetNormalizer {
   }
 
   private def concernsPolitics(text: String): Boolean = {
-    val words = text.replace("#", "").replace("@", "").toLowerCase.split(" +").toSeq.map(w => StringUtils.stripAccents(w).toLowerCase)
+    val words = text.replace("#", "").replace("@", "").toLowerCase.replace("le pen", "le_pen").replace("lepen", "le_pen").split(" +").toSeq.map(w => StringUtils.stripAccents(w).toLowerCase)
     return words.exists(w => presidentialElections.contains(w)) || words.exists(w => candidates.exists(c => c._1 == w || c._2.contains(w)))
   }
 
