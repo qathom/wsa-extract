@@ -24,7 +24,7 @@ object Main{
     val pool: ExecutorService = Executors.newFixedThreadPool(threadNumbers)
     val doneSignal: CountDownLatch = new CountDownLatch(threadNumbers)
 
-    println(threadNumbers + "threads will be used.")
+    println(threadNumbers + " " + "threads will be used.")
 
       try {
       1 to threadNumbers foreach { x =>
