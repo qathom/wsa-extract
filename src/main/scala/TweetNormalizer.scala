@@ -63,7 +63,7 @@ class TweetNormalizer {
 
   private def getCandidate(text: String): String = {
     val words = text.replace("#", "").replace("@", "").toLowerCase.replace("le pen", "le_pen").replace("lepen", "le_pen").split(" +").toSeq.map(w => StringUtils.stripAccents(w))
-    val candidatesFound = words.filter(w => candidates.exists(c => c._1 == w || c._2.contains(w))).distinct
+    val candidatesFound = words.filter(w => candidates.map(c => (c._1.toLowerCase, c._2.map(w => w.toLowerCase()))).exists(c => c._1 == w || c._2.contains(w))).distinct
 
     if (candidatesFound.size != 1) {
       // ignore tweet
@@ -75,7 +75,7 @@ class TweetNormalizer {
 
   private def concernsPolitics(text: String): Boolean = {
     val words = text.replace("#", "").replace("@", "").toLowerCase.replace("le pen", "le_pen").replace("lepen", "le_pen").split(" +").toSeq.map(w => StringUtils.stripAccents(w).toLowerCase)
-    return words.exists(w => presidentialElections.contains(w)) || words.exists(w => candidates.exists(c => c._1 == w || c._2.contains(w)))
+    return words.exists(w => presidentialElections.map(p => p.toLowerCase).contains(w)) || words.exists(w => candidates.map(c => (c._1.toLowerCase, c._2.map(w => w.toLowerCase()))).exists(c => c._1 == w || c._2.contains(w)))
   }
 
   private def getOutputFile(inputFileName: String, createdAt: String, isPolitical: Boolean): String = {
