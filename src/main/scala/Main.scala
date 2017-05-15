@@ -19,12 +19,12 @@ object Main{
     val numberOfFiles = inputFiles.size
     val q = new ArrayBlockingQueue[String](numberOfFiles, true)
     for (f <- inputFiles) {q.put(f.getName)}
-
+    java.util.Collections.shuffle(java.util.Arrays.asList(inputFiles))
     val threadNumbers = Runtime.getRuntime.availableProcessors
     val pool: ExecutorService = Executors.newFixedThreadPool(threadNumbers)
     val doneSignal: CountDownLatch = new CountDownLatch(threadNumbers)
 
-    println(threadNumbers + " " + "threads will be used.")
+    println(threadNumbers + "threads will be used.")
 
       try {
       1 to threadNumbers foreach { x =>
@@ -36,7 +36,7 @@ object Main{
                 while (q.size() > 0) {
                   val fileName = q.take()
                   println("Processing file " + fileName)
-                  println(pool + "threads will be used.")
+                  //println(pool + "threads will be used.")
                   tn.transform(fileName)
                 }
               }finally {
