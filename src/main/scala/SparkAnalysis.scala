@@ -38,27 +38,43 @@ class SparkAnalysis() {
       .toDF() // params => rename cols
       .cache()
 
-    //tweets.createOrReplaceTempView("tweets")
+    tweets.createOrReplaceTempView("tweets")
 
     // twitter format: EEE MMM dd HH:mm:ss ZZZZZ yyyy
     // example: Fri May 12 12:53:54 +0000 2017
     // format: yyyy-mm-dd
-    // tweets.sqlContext.sql("SELECT * from tweets where (date_format(date, '%Y-%m-%d') between '2017-01-01' and '2017-08-08')").show
+    //tweets.sqlContext.sql("SELECT date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') as Jour FROM tweets").show
 
-    val ts = unix_timestamp($"created_at", "EEE MMM dd HH:mm:ss ZZZZZ yyyy").cast("timestamp")
-    tweets.withColumn("ts", ts)
-    tweets.createOrReplaceTempView("tweets")
-    tweets.cache()
+    //val ts = unix_timestamp($"created_at", "EEE MMM dd HH:mm:ss ZZZZZ yyyy").cast("timestamp")
+    //tweets.withColumn("ts", ts)
+   // tweets.createOrReplaceTempView("tweets")
+    //tweets.cache()
+    //tweets.show()
 
-    val resultDFTweetsRation = spark.sql("Select Count (Distinct id_str) as TweetTotal, Round(Avg(sentiment)*10,2) as Sentiment, candidate  FROM tweets WHERE candidate is not NULL GROUP By candidate ORDER BY Sentiment DESC")
-    resultDFTweetsRation.show()
+    val totalTweetPolitique = spark.sql("SELECT Count(Distinct id_str) As total FROM tweets WHERE candidate IS NOT NULL")
+    val total = totalTweetPolitique.select("total").first().get(0)
+
+
+
+    val resultDFTweetsRatio = spark.sql(s"Select Round((Count(Distinct id_str)/$total)*100,2) as TweetTotal, Round(Avg(sentiment)*10,2) as Sentiment, candidate FROM tweets WHERE candidate IS NOT NULL GROUP By candidate ORDER BY Sentiment DESC")
+    resultDFTweetsRatio.show()
+
+    val totalTweetPolitiqueParJour = spark.sql("SELECT date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') as Jour, Count(Distinct id_str) As total FROM tweets WHERE candidate IS NOT NULL GROUP by date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') ORDER BY Jour ASC")
+
+
+    val resultDFTweetsRatioPerDate = spark.sql("Select date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') as Jour, candidate as Candidat ,Count(Distinct id_str) as NrbTweets FROM tweets WHERE candidate IS NOT NULL GROUP by candidate, date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') ORDER BY Jour ASC")
+    resultDFTweetsRatioPerDate.show()
+
+
+
+
+    //DATE_FORMAT(column_name, '%d/%m/%Y')
 
       /*.show
 
     // between dates
     val filteredData = tweets.select(tweets("created_at"),
-      date_format(unix_timestamp($"created_at", "EEE MMM dd HH:mm:ss ZZZZZ yyyy")
-        .cast("timestamp"), "yyyy-MM-dd")
+
         .alias("date_test"))
         .filter($"date_test"
         .between("2015-04-05", "2018-09-02"))
