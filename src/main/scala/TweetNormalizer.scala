@@ -124,106 +124,105 @@ class TweetNormalizer {
     val linesSize = source.getLines().size
     source.close()
 
-      println("######")
-      println("Extracting " + linesSize + " Twitter API messages from " + filename)
-      //println("######")
+    println("######")
+    println("Extracting " + linesSize + " Twitter API messages from " + filename)
+    //println("######")
 
-      var currentLine: String = ""
+    var currentLine: String = ""
 
     val source2 = Source.fromFile(filename)
 
-      for (line <- source2.getLines()) {
-        var isPolitical = false
-        breakable {
-          currentLine = line
-          lineNumber += 1
+    for (line <- source2.getLines()) {
+      var isPolitical = false
+      breakable {
+        currentLine = line
+        lineNumber += 1
 
-          // remove comma as first char
-          if (currentLine.length > 0 && currentLine.charAt(0).toString == ",") {
-            currentLine = currentLine.substring(1)
+        // remove comma as first char
+        if (currentLine.length > 0 && currentLine.charAt(0).toString == ",") {
+          currentLine = currentLine.substring(1)
+        }
+        // remove comma as last char
+        if (currentLine.length > 0 && currentLine.charAt(currentLine.length - 1).toString == ",") {
+          currentLine = currentLine.substring(0, currentLine.length - 1)
+        }
+
+        try {
+          val json = new JSONObject(currentLine);
+          val tweet = collection.mutable.Map[String, Any]()
+
+          // add primary data
+          try{
+          tweet("created_at") = json.getString("created_at")
+          tweet("id_str") = json.getString("id_str")}catch {
+          case e: Exception => {
+            //println("WARNING: " + e.getLocalizedMessage + " " + e.getCause + " " + e.getMessage)
+            //println(currentLine)
+            lineError += 1
+            break
+          }}
+
+          if (this.concernsPolitics(json.getString("text").toString())) {
+            isPolitical = true
+            tweet("id_str") = json.getString("id_str")
+            tweet("text") = json.getString("text")
+
+            tweet("retweet_count") = json.getInt("retweet_count")
+            tweet("favorite_count") = json.getInt("favorite_count")
+            tweet("lang") = json.getString("lang")
+            tweet("retweeted") = json.getBoolean("retweeted")
+            tweet("favorited") = json.getBoolean("favorited")
+
+            // user
+            tweet("user_id") = JsonUtil.getNestedObjectValue(json, "user", "id")
+            tweet("user_location") = JsonUtil.getNestedObjectValue(json, "user", "location")
+            tweet("user_statuses_count") = JsonUtil.getNestedObjectValue(json, "user", "statuses_count")
+            tweet("user_created_at") = JsonUtil.getNestedObjectValue(json, "user", "created_at")
+            tweet("user_lang") = JsonUtil.getNestedObjectValue(json, "user", "lang")
+
+            // place
+            tweet("country_code") = JsonUtil.getNestedObjectValue(json, "place", "country_code")
+            tweet("place_name") = JsonUtil.getNestedObjectValue(json, "place", "name")
+
+
+            tweet("candidate") = getCandidate(json.getString("text").toString())
+            tweet("sentiment") = TweetFrSent.getSentiment(json.getString("text").toString())
+
           }
-          // remove comma as last char
-          if (currentLine.length > 0 && currentLine.charAt(currentLine.length - 1).toString == ",") {
-            currentLine = currentLine.substring(0, currentLine.length - 1)
+          // append in correct file according to the tweet's date
+          var write = Json(DefaultFormats).write(tweet).toString
+          val outputFile = this.getOutputFile(inputFile, tweet("created_at").toString, isPolitical)
+
+
+          ////#########
+          // append to new line only if the file contains at least 1 tweet
+          if ((new File(outputFile).exists())) {
+            val source3 = Source.fromFile(outputFile)
+            if(source3.getLines().length > 0) {
+              write = "\n" + write
+            }
+            source3.close()
           }
 
+          val fw = new FileWriter(outputFile, true)
           try {
-            val json = new JSONObject(currentLine);
-            val tweet = collection.mutable.Map[String, Any]()
-
-            // add primary data
-            try{
-            tweet("created_at") = json.getString("created_at")
-            tweet("id_str") = json.getString("id_str")}catch {
-            case e: Exception => {
-              //println("WARNING: " + e.getLocalizedMessage + " " + e.getCause + " " + e.getMessage)
-              //println(currentLine)
-              lineError += 1
-              break
-            }}
-
-            if (this.concernsPolitics(json.getString("text").toString())) {
-              isPolitical = true
-              tweet("id_str") = json.getString("id_str")
-              tweet("text") = json.getString("text")
-
-              tweet("retweet_count") = json.getInt("retweet_count")
-              tweet("favorite_count") = json.getInt("favorite_count")
-              tweet("lang") = json.getString("lang")
-              tweet("retweeted") = json.getBoolean("retweeted")
-              tweet("favorited") = json.getBoolean("favorited")
-
-              // user
-              tweet("user_id") = JsonUtil.getNestedObjectValue(json, "user", "id")
-              tweet("user_location") = JsonUtil.getNestedObjectValue(json, "user", "location")
-              tweet("user_statuses_count") = JsonUtil.getNestedObjectValue(json, "user", "statuses_count")
-              tweet("user_created_at") = JsonUtil.getNestedObjectValue(json, "user", "created_at")
-              tweet("user_lang") = JsonUtil.getNestedObjectValue(json, "user", "lang")
-
-              // place
-              tweet("country_code") = JsonUtil.getNestedObjectValue(json, "place", "country_code")
-              tweet("place_name") = JsonUtil.getNestedObjectValue(json, "place", "name")
-
-
-              tweet("candidate") = getCandidate(json.getString("text").toString())
-              tweet("sentiment") = TweetFrSent.getSentiment(json.getString("text").toString())
-
-            }
-            // append in correct file according to the tweet's date
-            var write = Json(DefaultFormats).write(tweet).toString
-            val outputFile = this.getOutputFile(inputFile, tweet("created_at").toString, isPolitical)
-
-
-            ////#########
-            // append to new line only if the file contains at least 1 tweet
-            if ((new File(outputFile).exists())) {
-              val source3 = Source.fromFile(outputFile)
-              if(source3.getLines().length > 0) {
-                write = "\n" + write
-              }
-              source3.close()
-            }
-
-            val fw = new FileWriter(outputFile, true)
-            try {
-              fw.write(write)
-            } finally {
-              fw.close()
-            }
-          } catch {
-            case e: Exception => {
-              println("WARNING: " + e.getLocalizedMessage + " " + e.getCause + " " + e.getMessage)
-              //println(currentLine)
-              lineError += 1
-              break
-            }
+            fw.write(write)
+          } finally {
+            fw.close()
+          }
+        } catch {
+          case e: Exception => {
+            println("WARNING: " + e.getLocalizedMessage + " " + e.getCause + " " + e.getMessage)
+            //println(currentLine)
+            lineError += 1
+            break
           }
         }
       }
+    }
 
-      println(lineNumber + " " + "lines have been read.")
-      println(lineError + " " + " lines ignored (" + ((lineError.toFloat / linesSize.toFloat) * 100) + "% of failure).")
-      source2.close()
-    // at the end
+    println(lineNumber + " " + "lines have been read.")
+    println(lineError + " " + " lines ignored (" + ((lineError.toFloat / linesSize.toFloat) * 100) + "% of failure).")
+    source2.close()
   }
 }
