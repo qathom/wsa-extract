@@ -1,10 +1,7 @@
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{date_format, to_date, unix_timestamp}
-import org.apache.spark.sql.SQLContext
 import org.codehaus.jettison.json.JSONObject
 
 case class Tweet()

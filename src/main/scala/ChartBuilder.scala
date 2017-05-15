@@ -1,6 +1,4 @@
 import java.io.FileWriter
-import java.text.SimpleDateFormat
-import java.util.Date
 
 import org.codehaus.jettison.json.JSONObject
 import org.json4s.DefaultFormats

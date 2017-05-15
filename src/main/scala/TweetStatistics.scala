@@ -1,4 +1,4 @@
-import java.io.{File, FileWriter}
+import java.io.FileWriter
 
 import org.codehaus.jettison.json.JSONObject
 import org.json4s.DefaultFormats
