@@ -78,7 +78,7 @@ class TweetNormalizer {
 
   private def getCandidate(text: String): String = {
     val words = text.replace("#", "").replace("@", "").toLowerCase.replace("le pen", "le_pen").replace("lepen", "le_pen").split(" +").toSeq.map(w => StringUtils.stripAccents(w))
-    val candidatesFound = words.filter(w => candidates.map(c => (c._1.toLowerCase, c._2.map(w => w.toLowerCase()))).exists(c => c._1 == w || c._2.contains(w))).distinct
+    val candidatesFound = candidates.map(c => (c._1.toLowerCase, c._2.map(w => w.toLowerCase()))).filter(c => words.exists(w => c._1 == w || c._2.contains(w))).keys.toSet[String]
 
     if (candidatesFound.size != 1) {
       // ignore tweet
