@@ -1,14 +1,23 @@
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{date_format, to_date, unix_timestamp}
 import org.apache.spark.sql.SQLContext
+import org.codehaus.jettison.json.JSONObject
 
 case class Tweet()
 
 class SparkAnalysis() {
 
   var session: SparkSession = null
+
+  def formatDate(enDate: String): String = {
+    val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    val date: Date = simpleDateFormat.parse(enDate);
+    return new SimpleDateFormat("dd.MM").format(date)
+  }
 
   def createSession(): SparkSession = {
     val session = SparkSession
@@ -65,7 +74,25 @@ class SparkAnalysis() {
     val bc = new ChartBuilder
 
     // chart 1
-    bc.buildTimeline()
+    val tstat = new TweetStatistics
+    val json = tstat.getData()
+
+    // x-axis represents the dates
+    val x:Seq[String] =
+      for (i <- 0 to json.length() - 1)
+        yield formatDate(json.names().get(i).toString)
+
+    // y1-axis represents not political tweets
+    val y1:Seq[Double] =
+      for (i <- 0 to json.length() - 1)
+        yield new JSONObject(json.get(json.names().get(i).toString).toString).getDouble("notPolitics")
+
+    // y2-axis represents political tweets
+    val y2:Seq[Double] =
+      for (i <- 0 to json.length() - 1)
+        yield new JSONObject(json.get(json.names().get(i).toString).toString).getDouble("politics")
+
+    bc.buildTimeline(x, y1, y2)
 
     // chart 2
     bc.buildSentiments()
