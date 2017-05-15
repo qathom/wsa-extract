@@ -28,23 +28,29 @@ class TweetStatistics {
     fw.close()
   }
 
-  def showRatios(): Unit = {
+  def getData(): JSONObject = {
     try {
-      val json = new JSONObject(Source.fromFile(statsFile).getLines().mkString)
-
-      for (i <- 0 to json.length() - 1) {
-        val date = json.names().get(i).toString
-        val values = new JSONObject(json.get(date).toString)
-        val totalNotPolitics = values.getDouble("notPolitics")
-        val totalPolitics = values.getDouble("politics")
-        val ratio: Double = totalPolitics / totalNotPolitics
-
-        println("Ratio for: " + date + " = " + ratio)
-      }
+      return new JSONObject(Source.fromFile(statsFile).getLines().mkString)
     } catch {
       case e: Exception => {
         println("Stats file error: " + e.getLocalizedMessage + " " + e.getCause + " " + e.getMessage)
       }
+    }
+
+    return null
+  }
+
+  def showRatios(): Unit = {
+    val json = getData()
+
+    for (i <- 0 to json.length() - 1) {
+      val date = json.names().get(i).toString
+      val values = new JSONObject(json.get(date).toString)
+      val totalNotPolitics = values.getDouble("notPolitics")
+      val totalPolitics = values.getDouble("politics")
+      val ratio: Double = totalPolitics / totalNotPolitics
+
+      println("Ratio for: " + date + " = " + ratio)
     }
   }
 }
