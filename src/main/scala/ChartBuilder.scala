@@ -1,10 +1,18 @@
 import java.io.FileWriter
+import java.text.SimpleDateFormat
+import java.util.Date
 
 import org.codehaus.jettison.json.JSONObject
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Json
 
 class ChartBuilder {
+
+  def formatDate(enDate: String): String = {
+    val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    val date: Date = simpleDateFormat.parse(enDate);
+    return new SimpleDateFormat("dd.MM").format(date)
+  }
 
   def buildTimeline(x: Seq[String], y1: Seq[Double], y2: Seq[Double]): Unit = {
     //
