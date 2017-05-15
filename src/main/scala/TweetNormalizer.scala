@@ -12,21 +12,6 @@ import scala.collection.mutable.HashMap
 import scala.util.control.Breaks._
 import scala.io.Source
 
-/**
-  * Jvalue to String
-  */
-object Get {
-  def string(value: JValue): String = {
-    val JString(result) = value
-    result
-  }
-
-  def int(value: JValue): BigInt = {
-    val JInt(result) = value
-    result
-  }
-}
-
 object JsonUtil {
   def hasObject(json: JSONObject, value: String): Boolean = {
     try {
