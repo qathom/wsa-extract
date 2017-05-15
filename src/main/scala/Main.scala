@@ -1,5 +1,6 @@
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.{Executors, ExecutorService}
 import org.apache.log4j.Logger
 import org.apache.log4j.Level
 
@@ -25,30 +26,36 @@ object Main {
     java.util.Collections.shuffle(java.util.Arrays.asList(inputFiles))
     val threadNumbers = Runtime.getRuntime.availableProcessors
     val doneSignal: CountDownLatch = new CountDownLatch(threadNumbers)
-
+    val pool: ExecutorService = Executors.newFixedThreadPool(threadNumbers)
     println(threadNumbers + " " + "threads will be used.")
     println("Preparing " + numberOfFiles + " files")
 
-    1 to threadNumbers foreach { x =>
-      new Runnable {
-        def run {
-          try {
-            val tn = new TweetNormalizer
-            while (q.size() > 0) {
-              val fileName = q.take()
-              println("Processing file " + fileName)
-              //println(pool + "threads will be used.")
-              tn.transform(fileName)
+    try {
+      1 to threadNumbers foreach { x =>
+        pool.execute(
+          new Runnable {
+            def run {
+              try {
+                val tn = new TweetNormalizer
+                while (q.size() > 0) {
+                  val fileName = q.take()
+                  println("Processing file " + fileName)
+                  //println(pool + "threads will be used.")
+                  tn.transform(fileName)
+                }
+              } catch {
+                case e: Exception => {
+                  println("Error: " + e.getLocalizedMessage + " " + e.getCause + " " + e.getMessage)
+                }
+              } finally {
+                doneSignal.countDown()
+              }
             }
-          } catch {
-            case e: Exception => {
-              println("Error: " + e.getLocalizedMessage + " " + e.getCause + " " + e.getMessage)
-            }
-          } finally {
-            doneSignal.countDown()
           }
-        }
+        )
       }
+    } finally {
+      pool.shutdown()
     }
 
     doneSignal.await()
