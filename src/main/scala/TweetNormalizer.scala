@@ -58,11 +58,11 @@ class TweetNormalizer {
     "arthaud" -> Set("n_arthaud", "Arthaud", "LutteOuvrière", "LO"),
     "asselineau" -> Set("UPR_Asselineau", "JeVoteAsselineau"),
     "cheminade" -> Set("JCheminade", "Cheminade2017", "CHEMINADE", "JeVoteCheminade", "JacquesCheminade"),
-    "dupont aignan" -> Set("dupontaignan", "DupontAignan", "JeVoteDupontAignan"),
+    "aignan" -> Set("dupontaignan", "DupontAignan", "JeVoteDupontAignan"),
     "fillon" -> Set("FrancoisFillon", "TousFillon", "Fillon2017_fr", "Fillon", "Fillon2017", "FF2017", "FillonGate"),
     "hamon" -> Set("benoithamon", "Hamon2017", "Hamon2022"),
     "lassalle" -> Set("jeanlassalle", "JeVoteLassalle"),
-    "le pen" -> Set("MLP_officiel", "Marine2017", "LePen", "MLP", "MLPTF1"),
+    "le_pen" -> Set("MLP_officiel", "Marine2017", "LePen", "MLP", "MLPTF1"),
     "macron" -> Set("EmmanuelMacron", "Macron", "EM", "EnMarche", "JeVoteMacron", "Macron2017", "MacronLeak", "MacronGate"),
     "melenchon" -> Set("JLMelenchon‏", "Melenchon", "JLM"),
     "poutou" -> Set("PhilippePoutou", "JeVotePoutou", "Poutou2017", "NPA")

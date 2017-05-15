@@ -21,14 +21,12 @@ object Main{
     for (f <- inputFiles) {q.put(f.getName)}
     java.util.Collections.shuffle(java.util.Arrays.asList(inputFiles))
     val threadNumbers = Runtime.getRuntime.availableProcessors
-    val pool: ExecutorService = Executors.newFixedThreadPool(threadNumbers)
     val doneSignal: CountDownLatch = new CountDownLatch(threadNumbers)
 
-    println(threadNumbers + "threads will be used.")
+    println(threadNumbers + " " + "threads will be used.")
 
-      try {
-      1 to threadNumbers foreach { x =>
-        pool.execute(
+
+    1 to threadNumbers foreach { x =>
           new Runnable {
             def run {
               try {
@@ -44,11 +42,7 @@ object Main{
               }
             }
           }
-        )
       }
-    } finally {
-      pool.shutdown()
-    }
 
     doneSignal.await()
     val ts = new TweetStatistics
