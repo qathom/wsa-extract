@@ -1,5 +1,8 @@
+import java.text.SimpleDateFormat
+import java.util.{Date, Locale}
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicInteger
+
+import plotly._
 
 /**
   * Main
@@ -9,6 +12,12 @@ object Main{
 
   import java.util.concurrent.ArrayBlockingQueue
   import java.util.concurrent.{Executors,ExecutorService}
+
+  def formatDate(enDate: String): String = {
+    val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    val date: Date = simpleDateFormat.parse(enDate);
+    return new SimpleDateFormat("dd.MM").format(date)
+  }
 
   def main(args: Array[String]): Unit = {
     /*
@@ -50,7 +59,6 @@ object Main{
     ts.showRatios()
   }
 
-
     /*
      * run Spark: set data frame and make queries (SQL like)
      */
@@ -59,4 +67,12 @@ object Main{
     sa.run()
     sa.stop()
     */
+
+
+    /*
+     * build charts
+     */
+    val bc = new ChartBuilder
+    bc.build()
+  }
 }
