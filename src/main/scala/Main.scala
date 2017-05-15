@@ -1,10 +1,14 @@
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ArrayBlockingQueue
+import org.apache.log4j.Logger
+import org.apache.log4j.Level
 
 /**
   * Main
   */
 object Main {
+  Logger.getLogger("org").setLevel(Level.WARN)
+  Logger.getLogger("akka").setLevel(Level.WARN)
 
   def main(args: Array[String]): Unit = {
     /*
@@ -15,7 +19,9 @@ object Main {
     val inputFiles = new java.io.File("./input").listFiles.filter(_.getName.endsWith(".json"))
     val numberOfFiles = inputFiles.size
     val q = new ArrayBlockingQueue[String](numberOfFiles, true)
-    for (f <- inputFiles) {q.put(f.getName)}
+    for (f <- inputFiles) {
+      q.put(f.getName)
+    }
     java.util.Collections.shuffle(java.util.Arrays.asList(inputFiles))
     val threadNumbers = Runtime.getRuntime.availableProcessors
     val doneSignal: CountDownLatch = new CountDownLatch(threadNumbers)
