@@ -13,3 +13,5 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies += "org.codehaus.jettison" % "jettison" % "1.3.7"
+
+libraryDependencies += "com.databricks" % "spark-csv_2.11" % "1.2.0"
