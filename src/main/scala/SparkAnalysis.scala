@@ -11,12 +11,6 @@ class SparkAnalysis() {
 
   var session: SparkSession = null
 
-  private def formatDate(enDate: String): String = {
-    val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    val date: Date = simpleDateFormat.parse(enDate);
-    return new SimpleDateFormat("dd.MM").format(date)
-  }
-
   def createSession(): SparkSession = {
     val session = SparkSession
       .builder()
@@ -146,30 +140,6 @@ class SparkAnalysis() {
     val resultDFTweetsRatioPerDate = spark.sql("Select date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') as Jour, candidate as Candidat ,Count(Distinct id_str) as NrbTweets, Round(Avg(sentiment)*10,2) as Sentiment FROM tweets WHERE candidate IS NOT NULL GROUP by candidate, date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') ORDER BY Jour ASC")
     resultDFTweetsRatioPerDate.show()
 */
-
-    /*
-     * build the chart based on the JSON file
-     */
-    val bc = new ChartBuilder
-    val tstat = new TweetStatistics
-    val list = tstat.getDataListSorted()
-
-    // x-axis represents the dates
-    val x:Seq[String] =
-      for (el <- list)
-        yield formatDate(el._1)
-
-    // y1-axis represents not political tweets
-    val y1:Seq[Double] =
-      for (el <- list)
-        yield el._2.get("notPolitics").get
-
-    // y2-axis represents political tweets
-    val y2:Seq[Double] =
-      for (el <- list)
-        yield el._2.get("politics").get
-
-    bc.buildTimeline(x, y1, y2)
   }
 
   def stop(): Unit = {

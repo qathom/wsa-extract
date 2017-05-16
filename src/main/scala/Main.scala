@@ -1,6 +1,9 @@
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.{Executors, ExecutorService}
+import java.util.concurrent.{ExecutorService, Executors}
+
 import org.apache.log4j.Logger
 import org.apache.log4j.Level
 
@@ -11,12 +14,17 @@ object Main {
   Logger.getLogger("org").setLevel(Level.WARN)
   Logger.getLogger("akka").setLevel(Level.WARN)
 
+  private def formatDate(enDate: String): String = {
+    val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    val date: Date = simpleDateFormat.parse(enDate);
+    return new SimpleDateFormat("dd.MM").format(date)
+  }
+
   def main(args: Array[String]): Unit = {
     /*
      * transform will read the input file contained in input/ directory,
      * normalize them and then write in the output/ directory.
      */
-
     val inputFiles = new java.io.File("./input").listFiles.filter(_.getName.endsWith(".json"))
     val numberOfFiles = inputFiles.size
     val q = new ArrayBlockingQueue[String](numberOfFiles, true)
@@ -68,8 +76,29 @@ object Main {
     ts.setStats()
     ts.showRatios()
 
+    // build the chart based on the JSON file (stats.json)
+    val bc = new ChartBuilder
+    val list = ts.getDataListSorted()
+
+    // x-axis represents the dates
+    val x:Seq[String] =
+      for (el <- list)
+        yield formatDate(el._1)
+
+    // y1-axis represents not political tweets
+    val y1:Seq[Double] =
+      for (el <- list)
+        yield el._2.get("notPolitics").get
+
+    // y2-axis represents political tweets
+    val y2:Seq[Double] =
+      for (el <- list)
+        yield el._2.get("politics").get
+
+    bc.buildTimeline(x, y1, y2)
+
     /*
-     * run Spark: set data frame, make queries (SQL like) and build charts
+     * run Spark: set data frame, make queries (SQL like) and output data in CSV files
      */
     val sa = new SparkAnalysis
     sa.run()
