@@ -1,7 +1,8 @@
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.catalyst.SQLBuilder
 import org.codehaus.jettison.json.JSONObject
 
 case class Tweet()
@@ -32,6 +33,14 @@ class SparkAnalysis() {
 
   }
 
+  def saveToCsv(filePath:String, dataFrame: DataFrame): Unit = {
+    dataFrame.coalesce(1).write
+      .format("com.databricks.spark.csv")
+      .option("header", "true")
+      .mode("overwrite")
+      .save(filePath)
+  }
+
   def run(): Unit = {
     val spark = this.createSession()
 
@@ -55,7 +64,7 @@ class SparkAnalysis() {
     //tweets.show()
 
     // Graph 2.a
-    val  totalTweetParJour1 = spark.sql("" +
+    val totalTweetParJour1 = spark.sql("" +
       "SELECT candidate as Candidat, Count(Distinct id_str) As totalTweet " +
       "FROM tweets " +
       "WHERE candidate IS NOT NULL AND date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') " +
@@ -65,8 +74,10 @@ class SparkAnalysis() {
       println("Graph 2.a")
     totalTweetParJour1.show(100)
 
+    saveToCsv("./output/graph-2a.csv", totalTweetParJour1)
+
     // Graph 2.b
-    val  totalTweetParJour2 = spark.sql("" +
+    val totalTweetParJour2 = spark.sql("" +
       "SELECT candidate as Candidat, Count(Distinct id_str) As totalTweet " +
       "FROM tweets " +
       "WHERE (candidate = 'macron' OR candidate = 'le pen') " +
@@ -75,11 +86,13 @@ class SparkAnalysis() {
       "GROUP BY candidate " +
       "ORDER BY totalTweet DESC")
 
-println("Graph 2.b")
+    println("Graph 2.b")
     totalTweetParJour2.show(100)
 
-    // Graph 3.1
-    val  totalSentiParJour1 = spark.sql("" +
+    saveToCsv("./output/graph-2b.csv", totalTweetParJour2)
+
+    // Graph 3.a
+    val totalSentiParJour1 = spark.sql("" +
       "SELECT date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') AS Jour, candidate as Candidat, Count(Distinct id_str) As nbrJournalier, Round(Avg(sentiment)*10,2) as Sentiment, Count(Distinct id_str) * Round(Avg(sentiment)*10,2) as Score " +
       "FROM tweets " +
       "WHERE candidate IS NOT NULL AND date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') " +
@@ -89,8 +102,16 @@ println("Graph 2.b")
     println("Graph 3.1")
     totalSentiParJour1.show(1000)
 
-    //Graph 3.2
-    val  totalSentiParJour2 = spark.sql("" +
+    totalSentiParJour1.coalesce(1).write
+      .format("com.databricks.spark.csv")
+      .option("header", "true")
+      .mode("overwrite")
+      .save("./output/graph-3.1.csv")
+
+    saveToCsv("./output/graph-3a.csv", totalSentiParJour1)
+
+    //Graph 3.b
+    val totalSentiParJour2 = spark.sql("" +
       "SELECT date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') AS Jour, candidate as Candidat, Count(Distinct id_str) As nbrJournalier, Round(Avg(sentiment)*10,2) as Sentiment, Count(Distinct id_str) * Round(Avg(sentiment)*10,2) as Score " +
       "FROM tweets " +
       "WHERE (candidate = 'macron' OR candidate = 'le pen') " +
@@ -101,7 +122,15 @@ println("Graph 2.b")
     println("Graph 3.2")
     totalSentiParJour2.show(1000)
 
+    saveToCsv("./output/graph-3b.csv", totalSentiParJour2)
 
+    /*
+    val schemaList = totalSentiParJour1.schema.map(_.name).zipWithIndex
+    totalSentiParJour1.rdd.map(row =>
+      //here rec._1 is column name and rce._2 index
+      schemaList.map(rec => (rec._1, row(rec._2))).toMap
+    ).collect
+    */
 
  /*
     val totalTweetPolitique = spark.sql("SELECT Count(Distinct id_str) As total FROM tweets WHERE candidate IS NOT NULL ")
