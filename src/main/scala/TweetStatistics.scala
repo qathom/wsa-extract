@@ -1,4 +1,6 @@
 import java.io.FileWriter
+import java.text.SimpleDateFormat
+import java.util.Date
 
 import org.codehaus.jettison.json.JSONObject
 import org.json4s.DefaultFormats
@@ -9,6 +11,12 @@ import scala.io.Source
 class TweetStatistics {
 
   private val statsFile: String = "./output/stats.json"
+
+  private def toTimestamp(enDate: String): Long = {
+    val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    val date: Date = simpleDateFormat.parse(enDate);
+    return date.getTime
+  }
 
   def setStats(): Unit = {
     val ratios = scala.collection.mutable.Map[String, Any]()
@@ -38,6 +46,24 @@ class TweetStatistics {
     }
 
     return null
+  }
+
+  def getDataListSorted(): List[(String, Map[String, Double])] = {
+    val json = getData()
+    var map:Map[String, Map[String, Double]] = Map()
+    for (i <- 0 to json.length() - 1) {
+      val date = json.names().get(i).toString
+      val values = new JSONObject(json.get(date).toString)
+      val totalNotPolitics = values.getDouble("notPolitics")
+      val totalPolitics = values.getDouble("politics")
+      var dateStats: Map[String, Double] = Map()
+      dateStats += "notPolitics" -> totalNotPolitics
+      dateStats += "politics" -> totalPolitics
+
+      map += date -> dateStats
+    }
+
+    return map.toList.sortBy(row => toTimestamp(row._1 ))
   }
 
   def showRatios(): Unit = {
