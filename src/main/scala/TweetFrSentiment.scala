@@ -17,7 +17,6 @@ class TweetFrSentiment {
     if (!line.startsWith("id")) {
       val sp = line.split(";")
       var score: Int = 1
-      val eval = sp(2)
       if (!sp(1).contains(" ")) {
         if (sp(2).equals("negative")) {
           score = (score * -1)

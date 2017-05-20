@@ -44,6 +44,9 @@ class SparkAnalysis() {
       .save(filePath)
   }
 
+  /**
+    * Runs a Spark Session and executes Spark SQL requests
+    */
   def run(): Unit = {
     val spark = this.createSession()
 
@@ -65,8 +68,6 @@ class SparkAnalysis() {
       "GROUP BY candidate " +
       "ORDER BY totalTweet Desc")
 
-    totalTweetParJour1.show(100)
-
     saveToCsv("./output/graph-2a.csv", totalTweetParJour1)
 
     // second query
@@ -79,8 +80,6 @@ class SparkAnalysis() {
       "GROUP BY candidate " +
       "ORDER BY totalTweet DESC")
 
-    totalTweetParJour2.show(100)
-
     saveToCsv("./output/graph-2b.csv", totalTweetParJour2)
 
     // third query
@@ -91,14 +90,6 @@ class SparkAnalysis() {
       "BETWEEN '2017-04-10' AND '2017-04-23' " +
       "GROUP BY date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd'), candidate " +
       "ORDER BY Jour ASC, Score DESC")
-
-    totalSentiParJour1.show(1000)
-
-    totalSentiParJour1.coalesce(1).write
-      .format("com.databricks.spark.csv")
-      .option("header", "true")
-      .mode("overwrite")
-      .save("./output/graph-3.1.csv")
 
     saveToCsv("./output/graph-3a.csv", totalSentiParJour1)
 
@@ -112,11 +103,12 @@ class SparkAnalysis() {
       "GROUP BY date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd'), candidate " +
       "ORDER BY Jour ASC, Score DESC")
 
-    totalSentiParJour2.show(1000)
-
     saveToCsv("./output/graph-3b.csv", totalSentiParJour2)
   }
 
+  /**
+    * Stops the Spark session
+    */
   def stop(): Unit = {
     this.session.stop
   }
