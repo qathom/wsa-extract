@@ -14,7 +14,7 @@ class SparkAnalysis() {
     *
     * @return SparkSession
     */
-  def createSession(): SparkSession = {
+  private def createSession(): SparkSession = {
     val session = SparkSession
       .builder()
       .appName("WSA")
