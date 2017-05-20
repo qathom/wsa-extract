@@ -1,5 +1,3 @@
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.{ExecutorService, Executors}
@@ -14,18 +12,6 @@ object Main {
 
   Logger.getLogger("org").setLevel(Level.WARN)
   Logger.getLogger("akka").setLevel(Level.WARN)
-
-  /**
-    * Format a given string date in ISO format to day.month
-    *
-    * @param enDate
-    * @return string
-    */
-  private def formatDate(enDate: String): String = {
-    val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    val date: Date = simpleDateFormat.parse(enDate);
-    return new SimpleDateFormat("dd.MM").format(date)
-  }
 
   /**
     * Main method
@@ -90,35 +76,16 @@ object Main {
     doneSignal.await()
 
     /*
-     * after finishing the collect of data, we count
+     * after finishing the collect of data,
+     * we set statistics (ratio betweet not political and political tweets)
      */
     val ts = new TweetStatistics
     ts.setStats()
     ts.showRatios()
 
-    // build the chart based on the JSON file (stats.json)
-    val bc = new ChartBuilder
-    val list = ts.getDataListSorted()
-
-    // x-axis represents the dates
-    val x:Seq[String] =
-      for (el <- list)
-        yield formatDate(el._1)
-
-    // y1-axis represents not political tweets
-    val y1:Seq[Double] =
-      for (el <- list)
-        yield el._2.get("notPolitics").get
-
-    // y2-axis represents political tweets
-    val y2:Seq[Double] =
-      for (el <- list)
-        yield el._2.get("politics").get
-
-    bc.buildTimeline(x, y1, y2)
-
     /*
-     * run Spark: set data frame, make queries (SQL like) and output data in CSV files
+     * finally, we run Spark which permits to execute queries (in Spark SQL)
+     * and output SQL responses in CSV files
      */
     val sa = new SparkAnalysis
     sa.run()
