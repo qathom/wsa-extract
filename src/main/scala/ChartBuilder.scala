@@ -7,6 +7,12 @@ import org.json4s.jackson.Json
 
 class ChartBuilder {
 
+  /**
+    * Format a given string date in ISO format to day.month
+    *
+    * @param enDate
+    * @return string
+    */
   private def formatDate(enDate: String): String = {
     val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
     val date: Date = simpleDateFormat.parse(enDate);

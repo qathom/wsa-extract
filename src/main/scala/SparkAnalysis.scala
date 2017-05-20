@@ -1,16 +1,19 @@
-import java.text.SimpleDateFormat
-import java.util.Date
-
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.catalyst.SQLBuilder
-import org.codehaus.jettison.json.JSONObject
 
+/**
+  * Simple case class
+  */
 case class Tweet()
 
 class SparkAnalysis() {
 
   var session: SparkSession = null
 
+  /**
+    * Creates a Spark session
+    *
+    * @return SparkSession
+    */
   def createSession(): SparkSession = {
     val session = SparkSession
       .builder()
@@ -27,7 +30,13 @@ class SparkAnalysis() {
 
   }
 
-  def saveToCsv(filePath:String, dataFrame: DataFrame): Unit = {
+  /**
+    * Saves data in CSV format
+    *
+    * @param filePath
+    * @param dataFrame
+    */
+  private def saveToCsv(filePath:String, dataFrame: DataFrame): Unit = {
     dataFrame.coalesce(1).write
       .format("com.databricks.spark.csv")
       .option("header", "true")
@@ -40,24 +49,14 @@ class SparkAnalysis() {
 
     import spark.implicits._
 
+    // we analyze political tweets only, so the wildcard is *.politics.json
     val tweets = spark.read.json("./output/*.politics.json").as[Tweet]
-      .toDF() // params => rename cols
+      .toDF() // we don't add parameters because we want to keep the same column names
       .cache()
 
     tweets.createOrReplaceTempView("tweets")
 
-    // twitter format: EEE MMM dd HH:mm:ss ZZZZZ yyyy
-    // example: Fri May 12 12:53:54 +0000 2017
-    // format: yyyy-mm-dd
-    //tweets.sqlContext.sql("SELECT date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') as Jour FROM tweets").show
-
-    //val ts = unix_timestamp($"created_at", "EEE MMM dd HH:mm:ss ZZZZZ yyyy").cast("timestamp")
-    //tweets.withColumn("ts", ts)
-   // tweets.createOrReplaceTempView("tweets")
-    //tweets.cache()
-    //tweets.show()
-
-    // Graph 2.a
+    // first query
     val totalTweetParJour1 = spark.sql("" +
       "SELECT candidate as Candidat, Count(Distinct id_str) As totalTweet " +
       "FROM tweets " +
@@ -65,12 +64,12 @@ class SparkAnalysis() {
       "BETWEEN '2017-04-10' AND '2017-04-23' " +
       "GROUP BY candidate " +
       "ORDER BY totalTweet Desc")
-      println("Graph 2.a")
+
     totalTweetParJour1.show(100)
 
     saveToCsv("./output/graph-2a.csv", totalTweetParJour1)
 
-    // Graph 2.b
+    // second query
     val totalTweetParJour2 = spark.sql("" +
       "SELECT candidate as Candidat, Count(Distinct id_str) As totalTweet " +
       "FROM tweets " +
@@ -80,12 +79,11 @@ class SparkAnalysis() {
       "GROUP BY candidate " +
       "ORDER BY totalTweet DESC")
 
-    println("Graph 2.b")
     totalTweetParJour2.show(100)
 
     saveToCsv("./output/graph-2b.csv", totalTweetParJour2)
 
-    // Graph 3.a
+    // third query
     val totalSentiParJour1 = spark.sql("" +
       "SELECT date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') AS Jour, candidate as Candidat, Count(Distinct id_str) As nbrJournalier, Round(Avg(sentiment)*10,2) as Sentiment, Count(Distinct id_str) * Round(Avg(sentiment)*10,2) as Score " +
       "FROM tweets " +
@@ -93,7 +91,7 @@ class SparkAnalysis() {
       "BETWEEN '2017-04-10' AND '2017-04-23' " +
       "GROUP BY date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd'), candidate " +
       "ORDER BY Jour ASC, Score DESC")
-    println("Graph 3.1")
+
     totalSentiParJour1.show(1000)
 
     totalSentiParJour1.coalesce(1).write
@@ -104,7 +102,7 @@ class SparkAnalysis() {
 
     saveToCsv("./output/graph-3a.csv", totalSentiParJour1)
 
-    //Graph 3.b
+    // fourth query
     val totalSentiParJour2 = spark.sql("" +
       "SELECT date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') AS Jour, candidate as Candidat, Count(Distinct id_str) As nbrJournalier, Round(Avg(sentiment)*10,2) as Sentiment, Count(Distinct id_str) * Round(Avg(sentiment)*10,2) as Score " +
       "FROM tweets " +
@@ -113,33 +111,10 @@ class SparkAnalysis() {
       "BETWEEN '2017-04-24' AND '2017-05-07' " +
       "GROUP BY date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd'), candidate " +
       "ORDER BY Jour ASC, Score DESC")
-    println("Graph 3.2")
+
     totalSentiParJour2.show(1000)
 
     saveToCsv("./output/graph-3b.csv", totalSentiParJour2)
-
-    /*
-    val schemaList = totalSentiParJour1.schema.map(_.name).zipWithIndex
-    totalSentiParJour1.rdd.map(row =>
-      //here rec._1 is column name and rce._2 index
-      schemaList.map(rec => (rec._1, row(rec._2))).toMap
-    ).collect
-    */
-
- /*
-    val totalTweetPolitique = spark.sql("SELECT Count(Distinct id_str) As total FROM tweets WHERE candidate IS NOT NULL ")
-
-    val total = totalTweetPolitique.select("total").first().get(0)
-
-    val resultDFTweetsRatio = spark.sql(s"Select Round((Count(Distinct id_str)/$total)*100,2) as TweetTotal, Round(Avg(sentiment)*10,2) as Sentiment, candidate FROM tweets WHERE candidate IS NOT NULL GROUP By candidate ORDER BY Sentiment DESC")
-    resultDFTweetsRatio.show()
-
-    val totalTweetPolitiqueParJour = spark.sql("SELECT date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') as Jour, Count(Distinct id_str) As total FROM tweets WHERE candidate IS NOT NULL GROUP by date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') ORDER BY Jour ASC")
-    totalTweetPolitiqueParJour.show()
-
-    val resultDFTweetsRatioPerDate = spark.sql("Select date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') as Jour, candidate as Candidat ,Count(Distinct id_str) as NrbTweets, Round(Avg(sentiment)*10,2) as Sentiment FROM tweets WHERE candidate IS NOT NULL GROUP by candidate, date_format(cast(unix_timestamp(created_at, 'EEE MMM dd HH:mm:ss ZZZZZ yyyy') AS TIMESTAMP), 'yyyy-MM-dd') ORDER BY Jour ASC")
-    resultDFTweetsRatioPerDate.show()
-*/
   }
 
   def stop(): Unit = {

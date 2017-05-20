@@ -10,14 +10,26 @@ import scala.io.Source
 
 class TweetStatistics {
 
+  /**
+    * The output file path
+    */
   private val statsFile: String = "./output/stats.json"
 
+  /**
+    * Transforms a Date in ISO code in timestamp
+    *
+    * @param enDate
+    * @return long
+    */
   private def toTimestamp(enDate: String): Long = {
     val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
     val date: Date = simpleDateFormat.parse(enDate);
     return date.getTime
   }
 
+  /**
+    * For each date, set statistics by splitting political and not political tweets
+    */
   def setStats(): Unit = {
     val ratios = scala.collection.mutable.Map[String, Any]()
     val files = new java.io.File("./output").listFiles.filter(_.getName.endsWith(".politics.json"))
@@ -36,6 +48,11 @@ class TweetStatistics {
     fw.close()
   }
 
+  /**
+    * Retrieves chart.json data in JSON format
+    *
+    * @return JSONObject
+    */
   def getData(): JSONObject = {
     try {
       return new JSONObject(Source.fromFile(statsFile).getLines().mkString)
@@ -48,6 +65,11 @@ class TweetStatistics {
     return null
   }
 
+  /**
+    * Retrieves chart.json data in List
+    *
+    * @return List
+    */
   def getDataListSorted(): List[(String, Map[String, Double])] = {
     val json = getData()
     var map:Map[String, Map[String, Double]] = Map()
@@ -66,6 +88,9 @@ class TweetStatistics {
     return map.toList.sortBy(row => toTimestamp(row._1 ))
   }
 
+  /**
+    * Show ratios (notPolitics versus political) according to dates
+    */
   def showRatios(): Unit = {
     val json = getData()
 
